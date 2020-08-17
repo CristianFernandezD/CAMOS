@@ -16,18 +16,6 @@ class BlogPost(db.Model):
 	def __repr__(self):
 		return 'Blog post ' + str(self.id)
 
-all_posts = [
-	{
-		'title': 'Post 1',
-		'content': 'This is the content of post 1.',
-		'author': 'John'
-	},
-	{
-		'title': 'Post 2',
-		'content': 'This is the content of post 2.'
-	}
-]
-
 @app.route('/')
 def index():
 	return render_template('index.html')
@@ -38,7 +26,8 @@ def posts():
 	if request.method == 'POST':
 		post_title = request.form['title']
 		post_content = request.form['content']
-		db.session.add(BlogPost(title=post_title, content=post_content, author='John'))
+		post_author = request.form['author']
+		db.session.add(BlogPost(title=post_title, content=post_content, author=post_author))
 		db.session.commit()
 		return redirect('/posts')
 	else:
@@ -53,5 +42,26 @@ def hello(name, id):
 def get_req():
 	return 'You can only get this webpage.'
 	
+@app.route('/posts/delete/<int:id>')
+def delete(id):
+	post = BlogPost.query.get_or_404(id)
+	db.session.delete(post)
+	db.session.commit()
+	return redirect('/posts')
+	
+@app.route('/posts/edit/<int:id>', methods=['GET', 'POST'])
+def edit(id):
+
+	post = BlogPost.query.get_or_404(id)
+
+	if request.method == 'POST':
+		post.title = request.form['title']
+		post.author = request.form['author']
+		post.content = request.form['content']
+		db.session.commit()
+		return redirect('/posts')
+	else:
+		return render_template('edit.html', post=post)
+
 if __name__ == "__main__":
 	app.run(debug=True)
